@@ -8,8 +8,6 @@ import { playlists, defaultPlaylistId, shuffleTracks, type Track } from "@/lib/t
 // small slice of it, so we hand-roll the bits we need instead of pulling a
 // dependency).
 // -----------------------------------------------------------------------------
-type YTPlayerState = -1 | 0 | 1 | 2 | 3 | 5;
-
 interface YTPlayer {
   playVideo(): void;
   pauseVideo(): void;
@@ -283,81 +281,81 @@ export default function Player() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [ready, setReady] = useState(false);
 
-  const [shuffledTracks, setShuffledTracks] = useState(() => playlists[0].tracks);
+  const [shuffledTracks, setShuffledTracks] = useState(() => shuffleTracks(playlists[0].tracks));
 
   const ytRef = useRef<YTPlayer | null>(null);
-  const ytApiRef = useRef<YTNamespace | null>(null);
   const mountElRef = useRef<HTMLDivElement | null>(null);
   const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const pendingVideoRef = useRef<string | null>(null);
-  const isPlayingRef = useRef(false);
-  const skipEffectRef = useRef(false);
+  // activeTracksRef lets callbacks always see the current tracks without stale closure
+  const activeTracksRef = useRef<Track[]>([]);
+  const trackIndexRef = useRef(0);
 
   const playlist = playlists.find((p) => p.id === playlistId) ?? playlists[0];
   const activeTracks = playlistId === defaultPlaylistId ? shuffledTracks : playlist.tracks;
   const track: Track = activeTracks[trackIndex] ?? activeTracks[0];
 
-  // ---- keep the single floating artwork/iframe container glued on top of
-  // whichever placeholder (desktop pill or mobile card) is visible right now.
-  // YouTube iframe is hidden in a zero-size container for audio-only playback
-  // No position syncing needed - fixes jitter on scroll
+  // Keep refs in sync
+  activeTracksRef.current = activeTracks;
+  trackIndexRef.current = trackIndex;
 
-  // ---- create the YT player once, on the persistent mount div.
   useEffect(() => {
     setShuffledTracks(shuffleTracks(playlists[0].tracks));
     setTrackIndex(0);
   }, [playlistId]);
 
+  // ---- play a video by id directly on the YT player
+  const playVideo = useCallback((videoId: string) => {
+    const p = ytRef.current as unknown as { loadVideoById?: (id: string) => void };
+    p?.loadVideoById?.(videoId);
+  }, []);
+
+  // ---- init YT player once
   useEffect(() => {
     let cancelled = false;
     loadYouTubeApi().then((YT) => {
       if (cancelled || !mountElRef.current) return;
-      ytApiRef.current = YT;
       const innerId = "yt-inner-mount";
-      mountElRef.current.innerHTML = `<div id="${innerId}" class="h-full w-full"></div>`;
+      mountElRef.current.innerHTML = `<div id="${innerId}"></div>`;
       const player = new YT.Player(innerId, {
-        videoId: track.videoId,
-        playerVars: {
-          controls: 0,
-          modestbranding: 1,
-          rel: 0,
-          playsinline: 1,
-          fs: 0,
-        },
+        videoId: activeTracksRef.current[0]?.videoId ?? "",
+        playerVars: { controls: 0, modestbranding: 1, rel: 0, playsinline: 1, fs: 0 },
         events: {
-          onReady: () => {
-            setReady(true);
-            if (pendingVideoRef.current) {
-              pendingVideoRef.current = null;
-            }
-          },
           onStateChange: (e) => {
-            const YTS = YT.PlayerState;
-            if (e.data === YTS.PLAYING) { isPlayingRef.current = true; setIsPlaying(true); }
-            if (e.data === YTS.PAUSED) { isPlayingRef.current = false; setIsPlaying(false); }
-            if (e.data === YTS.ENDED) {
-              setTrackIndex((i) => {
-                const next = (i + 1) % activeTracks.length;
-                const p = e.target as unknown as { loadVideoById?: (id: string) => void };
-                p?.loadVideoById?.(activeTracks[next].videoId);
-                skipEffectRef.current = true;
-                setCurrentTime(0);
-                setDuration(0);
-                return next;
-              });
+            const S = YT.PlayerState;
+            if (e.data === S.PLAYING) {
+              setIsPlaying(true);
+              progressTimer.current = setInterval(() => {
+                const d = ytRef.current?.getDuration() ?? 0;
+                const t = ytRef.current?.getCurrentTime() ?? 0;
+                if (Number.isFinite(d) && d > 0) setDuration(d);
+                if (Number.isFinite(t)) setCurrentTime(t);
+              }, 250);
+            }
+            if (e.data === S.PAUSED || e.data === S.ENDED) {
+              setIsPlaying(false);
+              if (progressTimer.current) { clearInterval(progressTimer.current); progressTimer.current = null; }
+            }
+            if (e.data === S.ENDED) {
+              const tracks = activeTracksRef.current;
+              const next = (trackIndexRef.current + 1) % tracks.length;
+              trackIndexRef.current = next;
+              setTrackIndex(next);
+              setCurrentTime(0);
+              setDuration(0);
+              const p = e.target as unknown as { loadVideoById?: (id: string) => void };
+              p?.loadVideoById?.(tracks[next].videoId);
             }
           },
-          onError: (e) => {
-            // Track went private/deleted/embedding disabled after we shipped.
-            // Log it and move on without leaving the player stuck on the failed ID.
-            console.warn("[player] video error", { code: e.data, videoId: track.videoId });
-            pendingVideoRef.current = null;
-            setTrackIndex((i) => {
-              const next = (i + 1) % activeTracks.length;
-              return next === i ? 0 : next;
-            });
+          onError: () => {
+            const tracks = activeTracksRef.current;
+            const next = (trackIndexRef.current + 1) % tracks.length;
+            trackIndexRef.current = next;
+            setTrackIndex(next);
+            setCurrentTime(0);
+            setDuration(0);
+            const p = ytRef.current as unknown as { loadVideoById?: (id: string) => void };
+            p?.loadVideoById?.(tracks[next].videoId);
           },
         },
       });
@@ -365,95 +363,43 @@ export default function Player() {
     });
     return () => {
       cancelled = true;
+      if (progressTimer.current) clearInterval(progressTimer.current);
       ytRef.current?.destroy();
       ytRef.current = null;
     };
-    // Only ever created once — track/playlist switches use loadVideoById-style
-    // methods below rather than recreating the player (that's what keeps the
-    // vinyl spin state and iframe from restarting).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ---- when the selected track changes, load it into the existing player.
-  const trackVideoId = track.videoId;
-  useEffect(() => {
-    if (!ready || !ytRef.current) {
-      pendingVideoRef.current = trackVideoId;
-      return;
-    }
-    const player = ytRef.current as unknown as {
-      loadVideoById?: (id: string) => void;
-      cueVideoById?: (id: string) => void;
-      playVideo?: () => void;
-    };
-    if (!player || typeof player.loadVideoById !== "function" || typeof player.cueVideoById !== "function") {
-      return;
-    }
-
-    if (skipEffectRef.current) {
-      skipEffectRef.current = false;
-      return;
-    }
-    if (isPlayingRef.current) {
-      player.loadVideoById(trackVideoId);
-    } else {
-      player.cueVideoById(trackVideoId);
-    }
-
-    setCurrentTime(0);
-    setDuration(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trackVideoId, ready]);
-
-  // ---- progress polling (only when playing for efficiency)
-  useEffect(() => {
-    if (!isPlaying) return;
-    
-    progressTimer.current = setInterval(() => {
-      const p = ytRef.current;
-      if (!p) return;
-      const d = p.getDuration();
-      const t = p.getCurrentTime();
-      if (Number.isFinite(d) && d > 0) setDuration(d);
-      if (Number.isFinite(t)) setCurrentTime(t);
-    }, 250);
-    return () => {
-      if (progressTimer.current) clearInterval(progressTimer.current);
-    };
-  }, [isPlaying]);
-
   const togglePlay = useCallback(() => {
     const p = ytRef.current;
-    if (!p || typeof p.playVideo !== "function" || typeof p.pauseVideo !== "function") return;
+    if (!p) return;
     if (isPlaying) p.pauseVideo();
     else p.playVideo();
   }, [isPlaying]);
 
   const nextTrack = useCallback(() => {
-    const next = (trackIndex + 1) % activeTracks.length;
-    const p = ytRef.current as unknown as { loadVideoById?: (id: string) => void };
-    p?.loadVideoById?.(activeTracks[next].videoId);
-    skipEffectRef.current = true;
+    const tracks = activeTracksRef.current;
+    const next = (trackIndexRef.current + 1) % tracks.length;
+    trackIndexRef.current = next;
     setTrackIndex(next);
     setCurrentTime(0);
     setDuration(0);
-  }, [activeTracks, trackIndex]);
+    playVideo(tracks[next].videoId);
+  }, [playVideo]);
 
   const prevTrack = useCallback(() => {
-    const next = (trackIndex - 1 + activeTracks.length) % activeTracks.length;
-    const p = ytRef.current as unknown as { loadVideoById?: (id: string) => void };
-    p?.loadVideoById?.(activeTracks[next].videoId);
-    skipEffectRef.current = true;
+    const tracks = activeTracksRef.current;
+    const next = (trackIndexRef.current - 1 + tracks.length) % tracks.length;
+    trackIndexRef.current = next;
     setTrackIndex(next);
     setCurrentTime(0);
     setDuration(0);
-  }, [activeTracks, trackIndex]);
+    playVideo(tracks[next].videoId);
+  }, [playVideo]);
 
   const onSeek = useCallback(
     (ratio: number) => {
-      const p = ytRef.current;
-      if (!p) return;
-      p.seekTo(ratio * duration, true);
+      ytRef.current?.seekTo(ratio * duration, true);
       setCurrentTime(ratio * duration);
     },
     [duration]
@@ -473,8 +419,8 @@ export default function Player() {
 
   return (
     <>
-      {/* Hidden YouTube iframe for audio-only playback */}
-      <div ref={mountElRef} className="hidden h-0 w-0" />
+      {/* YouTube iframe — must be visible (even 1px) for mobile autoplay */}
+      <div ref={mountElRef} className="fixed" style={{ width: 1, height: 1, top: -2, left: -2, opacity: 0, pointerEvents: "none" }} />
 
       {/* Mini-Player Bar */}
       <div suppressHydrationWarning className="fixed bottom-0 left-0 right-0 z-40 flex w-full justify-center bg-gradient-to-t from-ink via-ink/95 to-ink/20 px-2 py-3 pb-safe sm:px-4 sm:py-4">
