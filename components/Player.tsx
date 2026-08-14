@@ -292,6 +292,8 @@ export default function Player() {
   const mountElRef = useRef<HTMLDivElement | null>(null);
   const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const pendingVideoRef = useRef<string | null>(null);
+  const isPlayingRef = useRef(false);
+  const skipEffectRef = useRef(false);
 
   const playlist = playlists.find((p) => p.id === playlistId) ?? playlists[0];
   const activeTracks = playlistId === defaultPlaylistId ? shuffledTracks : playlist.tracks;
@@ -333,10 +335,18 @@ export default function Player() {
           },
           onStateChange: (e) => {
             const YTS = YT.PlayerState;
-            if (e.data === YTS.PLAYING) setIsPlaying(true);
-            if (e.data === YTS.PAUSED) setIsPlaying(false);
+            if (e.data === YTS.PLAYING) { isPlayingRef.current = true; setIsPlaying(true); }
+            if (e.data === YTS.PAUSED) { isPlayingRef.current = false; setIsPlaying(false); }
             if (e.data === YTS.ENDED) {
-              setTrackIndex((i) => (i + 1) % activeTracks.length);
+              setTrackIndex((i) => {
+                const next = (i + 1) % activeTracks.length;
+                const p = e.target as unknown as { loadVideoById?: (id: string) => void };
+                p?.loadVideoById?.(activeTracks[next].videoId);
+                skipEffectRef.current = true;
+                setCurrentTime(0);
+                setDuration(0);
+                return next;
+              });
             }
           },
           onError: (e) => {
@@ -379,20 +389,21 @@ export default function Player() {
     if (!player || typeof player.loadVideoById !== "function" || typeof player.cueVideoById !== "function") {
       return;
     }
-    
-    if (isPlaying) {
+
+    if (skipEffectRef.current) {
+      skipEffectRef.current = false;
+      return;
+    }
+    if (isPlayingRef.current) {
       player.loadVideoById(trackVideoId);
-      if (typeof player.playVideo === "function") {
-        player.playVideo();
-      }
     } else {
       player.cueVideoById(trackVideoId);
     }
-    
+
     setCurrentTime(0);
     setDuration(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trackVideoId, ready, isPlaying]);
+  }, [trackVideoId, ready]);
 
   // ---- progress polling (only when playing for efficiency)
   useEffect(() => {
@@ -419,14 +430,28 @@ export default function Player() {
   }, [isPlaying]);
 
   const nextTrack = useCallback(() => {
-    setIsPlaying(true);
-    setTrackIndex((i) => (i + 1) % activeTracks.length);
-  }, []);
+    setTrackIndex((i) => {
+      const next = (i + 1) % activeTracks.length;
+      const p = ytRef.current as unknown as { loadVideoById?: (id: string) => void };
+      p?.loadVideoById?.(activeTracks[next].videoId);
+      skipEffectRef.current = true;
+      setCurrentTime(0);
+      setDuration(0);
+      return next;
+    });
+  }, [activeTracks]);
 
   const prevTrack = useCallback(() => {
-    setIsPlaying(true);
-    setTrackIndex((i) => (i - 1 + activeTracks.length) % activeTracks.length);
-  }, []);
+    setTrackIndex((i) => {
+      const next = (i - 1 + activeTracks.length) % activeTracks.length;
+      const p = ytRef.current as unknown as { loadVideoById?: (id: string) => void };
+      p?.loadVideoById?.(activeTracks[next].videoId);
+      skipEffectRef.current = true;
+      setCurrentTime(0);
+      setDuration(0);
+      return next;
+    });
+  }, [activeTracks]);
 
   const onSeek = useCallback(
     (ratio: number) => {
