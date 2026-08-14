@@ -470,7 +470,7 @@ export default function Player() {
       {/* Mini-Player Bar */}
       <div suppressHydrationWarning className="flex w-full justify-center px-2 sm:px-4">
         <div className="w-full max-w-[min(94vw,42rem)] rounded-2xl border border-white/10 bg-black/70 p-2 sm:p-4">
-          <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             {/* Album Thumbnail */}
             <div className="hidden h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-ink-soft ring-1 ring-brass/40 sm:flex">
               <div className="flex h-full w-full items-center justify-center">
@@ -481,19 +481,19 @@ export default function Player() {
             {/* Song Info */}
             <div className="w-full min-w-0 flex-1">
               <p className="line-clamp-2 text-[11px] font-bold text-cream sm:line-clamp-1 sm:text-sm">{track.title}</p>
-              <div className="mt-1.5 flex items-center gap-2">
+              <div className="mt-2 flex items-center gap-2">
                 <div className="min-w-0 flex-1">
                   <SeekBar progress={progress} onSeek={onSeek} />
                 </div>
               </div>
-              <div className="mt-1 flex justify-between font-mono text-[9px] text-cream/60 sm:text-xs">
+              <div className="mt-2 flex justify-between font-mono text-[9px] text-cream/60 sm:text-xs">
                 <span>{formatTime(currentTime)}</span>
                 <span>{displayDuration}</span>
               </div>
             </div>
 
             {/* Controls */}
-            <div className="flex w-full items-center justify-center gap-1 shrink-0 sm:w-auto sm:gap-2">
+            <div className="flex w-full items-center justify-center gap-2 shrink-0 sm:w-auto sm:justify-end">
               <button
                 type="button"
                 onClick={prevTrack}
