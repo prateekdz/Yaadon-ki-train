@@ -26,7 +26,7 @@ function ScrollIndicator() {
 export default function Home() {
   return (
     <>
-    <main suppressHydrationWarning className="relative flex w-full min-h-dvh flex-col items-center justify-start overflow-hidden">
+    <main suppressHydrationWarning className="relative flex w-full min-h-dvh flex-col items-center justify-start overflow-x-hidden">
       {/* Background */}
       <div className="hero-bg fixed inset-0 -z-20 w-full bg-cover bg-center bg-no-repeat">
         <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/20 to-black/88" />
@@ -47,9 +47,9 @@ export default function Home() {
       <TopRow />
 
       {/* Main content area - single flex column with consistent gaps */}
-      <div className="mx-auto flex w-full max-w-none flex-col items-center gap-4 px-3 pb-4 pt-20 sm:gap-6 sm:px-6 sm:pt-16 md:max-w-[760px] md:gap-7 md:pt-28">
+      <div className="mx-auto flex w-full max-w-none flex-col items-center gap-4 px-3 pb-40 pt-20 sm:gap-6 sm:px-6 sm:pb-36 sm:pt-16 md:max-w-[760px] md:gap-7 md:pb-44 md:pt-28 lg:pb-48">
         {/* Hero Title */}
-        <h1 className="max-w-4xl text-center font-display text-[clamp(2.6rem,9vw,4.6rem)] font-bold leading-[0.95] text-cream drop-shadow-[0_6px_24px_rgba(0,0,0,0.8)] py-4 sm:py-6 md:py-8 sm:text-[clamp(3.5rem,7vw,5.5rem)] lg:text-[clamp(4.25rem,6vw,6.5rem)]">
+        <h1 className="max-w-4xl text-center font-display text-[clamp(2.6rem,9vw,4.6rem)] font-bold leading-[1.15] text-cream drop-shadow-[0_6px_24px_rgba(0,0,0,0.8)] py-4 sm:py-6 md:py-8 sm:text-[clamp(3.5rem,7vw,5.5rem)] lg:text-[clamp(4.25rem,6vw,6.5rem)]">
           यादों की<br />ट्रेन
         </h1>
 

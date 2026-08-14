@@ -66,6 +66,9 @@
   .safe-r {
     right: max(1rem, env(safe-area-inset-right));
   }
+  .pb-safe {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
 
   /* Mobile-only: prevent horizontal scroll on small screens */
   @media (max-width: 768px) {
