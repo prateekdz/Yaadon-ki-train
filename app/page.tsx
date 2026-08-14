@@ -47,14 +47,14 @@ export default function Home() {
       <TopRow />
 
       {/* Main content area - single flex column with consistent gaps */}
-      <div className="flex w-full flex-col items-center gap-4 px-4 pb-4 pt-20 sm:gap-6 sm:px-6 sm:pt-16 md:gap-7">
+      <div className="mx-auto flex w-full flex-col items-center gap-4 px-3 pb-4 pt-20 sm:gap-6 sm:px-6 sm:pt-16 md:max-w-[760px] md:gap-7">
         {/* Hero Title */}
-        <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-bold text-cream drop-shadow-[0_6px_24px_rgba(0,0,0,0.8)] leading-tight text-center max-w-4xl">
+        <h1 className="max-w-4xl text-center font-display text-[clamp(2.6rem,9vw,4.6rem)] font-bold leading-[0.95] text-cream drop-shadow-[0_6px_24px_rgba(0,0,0,0.8)] sm:text-[clamp(3.5rem,7vw,5.5rem)] lg:text-[clamp(4.25rem,6vw,6.5rem)]">
           यादों की<br />ट्रेन
         </h1>
 
         {/* Subtitle */}
-        <p className="text-[9px] sm:text-[11px] uppercase tracking-[0.18em] text-cream/80 text-center">
+        <p className="text-center text-[9px] uppercase tracking-[0.18em] text-cream/80 sm:text-[11px]">
           Powered by <span className="font-bold text-cream underline">Yaadon Ki Train</span>
         </p>
 

@@ -374,12 +374,17 @@ export default function Player() {
     const player = ytRef.current as unknown as {
       loadVideoById?: (id: string) => void;
       cueVideoById?: (id: string) => void;
+      playVideo?: () => void;
     };
     if (!player || typeof player.loadVideoById !== "function" || typeof player.cueVideoById !== "function") {
       return;
     }
     if (isPlaying) {
       player.loadVideoById(trackVideoId);
+      if (typeof player.playVideo === "function") {
+        player.playVideo();
+      }
+      setIsPlaying(true);
     } else {
       player.cueVideoById(trackVideoId);
     }
@@ -413,12 +418,27 @@ export default function Player() {
   }, [isPlaying]);
 
   const nextTrack = useCallback(() => {
-    setTrackIndex((i) => (i + 1) % activeTracks.length);
-  }, [activeTracks.length]);
+    setTrackIndex((i) => {
+      const nextIndex = (i + 1) % activeTracks.length;
+      return nextIndex;
+    });
+    if (isPlaying) {
+      setIsPlaying(true);
+      if (ytRef.current && typeof ytRef.current.playVideo === "function") {
+        ytRef.current.playVideo();
+      }
+    }
+  }, [activeTracks.length, isPlaying]);
 
   const prevTrack = useCallback(() => {
     setTrackIndex((i) => (i - 1 + activeTracks.length) % activeTracks.length);
-  }, [activeTracks.length]);
+    if (isPlaying) {
+      setIsPlaying(true);
+      if (ytRef.current && typeof ytRef.current.playVideo === "function") {
+        ytRef.current.playVideo();
+      }
+    }
+  }, [activeTracks.length, isPlaying]);
 
   const onSeek = useCallback(
     (ratio: number) => {
@@ -448,25 +468,25 @@ export default function Player() {
       <div ref={mountElRef} className="hidden h-0 w-0" />
 
       {/* Mini-Player Bar */}
-      <div suppressHydrationWarning className="w-full flex justify-center px-2 sm:px-4">
-        <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-black/70 p-2 sm:p-4">
+      <div suppressHydrationWarning className="flex w-full justify-center px-2 sm:px-4">
+        <div className="w-full max-w-[min(94vw,42rem)] rounded-2xl border border-white/10 bg-black/70 p-2 sm:p-4">
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-4">
             {/* Album Thumbnail */}
-            <div className="hidden h-12 w-12 shrink-0 rounded-lg overflow-hidden bg-ink-soft ring-1 ring-brass/40 sm:flex">
-              <div className="h-full w-full flex items-center justify-center">
+            <div className="hidden h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-ink-soft ring-1 ring-brass/40 sm:flex">
+              <div className="flex h-full w-full items-center justify-center">
                 <div className="h-6 w-6 rounded-full bg-gradient-to-br from-brass/40 to-brass-soft/20" />
               </div>
             </div>
 
             {/* Song Info */}
             <div className="w-full min-w-0 flex-1">
-              <p className="text-[11px] sm:text-sm font-bold text-cream line-clamp-2 sm:line-clamp-1">{track.title}</p>
+              <p className="line-clamp-2 text-[11px] font-bold text-cream sm:line-clamp-1 sm:text-sm">{track.title}</p>
               <div className="mt-1.5 flex items-center gap-2">
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <SeekBar progress={progress} onSeek={onSeek} />
                 </div>
               </div>
-              <div className="flex justify-between font-mono text-[9px] sm:text-xs text-cream/60 mt-1">
+              <div className="mt-1 flex justify-between font-mono text-[9px] text-cream/60 sm:text-xs">
                 <span>{formatTime(currentTime)}</span>
                 <span>{displayDuration}</span>
               </div>
@@ -478,7 +498,7 @@ export default function Player() {
                 type="button"
                 onClick={prevTrack}
                 aria-label="Previous"
-                className="flex h-7 w-7 items-center justify-center rounded-full text-cream/70 hover:text-cream transition-fast active:scale-95 sm:h-8 sm:w-8"
+                className="flex h-7 w-7 items-center justify-center rounded-full text-cream/70 transition-fast hover:text-cream active:scale-95 sm:h-8 sm:w-8"
               >
                 <PrevIcon />
               </button>
@@ -494,7 +514,7 @@ export default function Player() {
                 type="button"
                 onClick={nextTrack}
                 aria-label="Next"
-                className="flex h-7 w-7 items-center justify-center rounded-full text-cream/70 hover:text-cream transition-fast active:scale-95 sm:h-8 sm:w-8"
+                className="flex h-7 w-7 items-center justify-center rounded-full text-cream/70 transition-fast hover:text-cream active:scale-95 sm:h-8 sm:w-8"
               >
                 <NextIcon />
               </button>

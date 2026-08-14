@@ -19,50 +19,52 @@ function YouTubeIcon() {
 
 export default function TopRow() {
   return (
-    <div className="fixed inset-x-0 top-0 z-40 flex flex-col items-center justify-center px-3 py-3 sm:flex-row sm:justify-between sm:px-6 sm:py-4">
-      {/* Row 1 (Mobile) / Left (Desktop): Clock & Online Counter */}
-      <div className="flex w-full items-center justify-center gap-2 sm:w-auto sm:gap-3">
-        <div className="rounded-full border border-white/15 bg-white/5 px-3 py-2 text-[10px] font-semibold text-cream sm:px-4 sm:py-2.5 sm:text-xs">
-          <Clock />
+    <div className="fixed left-1/2 top-0 z-40 w-[min(100vw,780px)] -translate-x-1/2 px-2 py-2 sm:w-[min(94vw,780px)] sm:px-4 sm:py-4">
+      <div className="flex w-full flex-wrap items-center justify-center gap-1.5 sm:gap-2 sm:justify-between">
+        {/* Row 1 (Mobile) / Left (Desktop): Clock & Online Counter */}
+        <div className="flex max-w-full flex-wrap items-center justify-center gap-1.5 sm:gap-2 sm:justify-start">
+          <div className="rounded-full border border-white/15 bg-white/5 px-2 py-1.5 text-[8px] font-semibold text-cream whitespace-nowrap sm:px-3 sm:py-2 sm:text-[10px] md:px-4 md:py-2.5 md:text-xs">
+            <Clock />
+          </div>
+          <div className="flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2 py-1.5 text-[8px] font-semibold text-cream whitespace-nowrap sm:gap-1.5 sm:px-3 sm:py-2 sm:text-[10px] md:gap-2 md:px-4 md:py-2.5 md:text-xs">
+            <div className="h-1 w-1 rounded-full bg-green-500 sm:h-1.5 sm:w-1.5 md:h-2 md:w-2" />
+            <ListenerCount />
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-2 text-[10px] font-semibold text-cream sm:gap-2 sm:px-4 sm:py-2.5 sm:text-xs">
-          <div className="h-1.5 w-1.5 rounded-full bg-green-500 sm:h-2 sm:w-2" />
-          <ListenerCount />
-        </div>
-      </div>
 
-      {/* Row 2 (Mobile) / Right (Desktop): Nav Pills (About, FAQ, Spotify, YT Music) */}
-      <div className="mt-2 flex w-full items-center justify-center gap-2 sm:mt-0 sm:w-auto sm:gap-3">
-        <a
-          href="#about"
-          className="rounded-full border border-white/15 bg-white/5 px-3 py-2 text-[10px] font-semibold text-cream transition-fast hover:text-brass sm:px-4 sm:py-2.5 sm:text-xs"
-        >
-          About
-        </a>
-        <a
-          href="#faq"
-          className="rounded-full border border-white/15 bg-white/5 px-3 py-2 text-[10px] font-semibold text-cream transition-fast hover:text-brass sm:px-4 sm:py-2.5 sm:text-xs"
-        >
-          FAQ
-        </a>
-        <a
-          href="https://open.spotify.com"
-          target="_blank"
-          rel="noreferrer noopener"
-          aria-label="Listen on Spotify"
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-green-400 transition-fast hover:text-green-300 sm:h-10 sm:w-10"
-        >
-          <SpotifyIcon />
-        </a>
-        <a
-          href="https://www.youtube.com/@Prateekdz"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Listen on YouTube"
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-red-400 transition-fast hover:text-red-300 sm:h-10 sm:w-10"
-        >
-          <YouTubeIcon />
-        </a>
+        {/* Row 2 (Mobile) / Right (Desktop): Nav Pills (About, FAQ, Spotify, YT Music) */}
+        <div className="flex max-w-full flex-wrap items-center justify-center gap-1.5 sm:gap-2 sm:justify-end">
+          <a
+            href="#about"
+            className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-2 py-1.5 text-[8px] font-semibold text-cream whitespace-nowrap transition-fast hover:text-brass sm:px-3 sm:py-2 sm:text-[10px] md:px-4 md:py-2.5 md:text-xs"
+          >
+            About
+          </a>
+          <a
+            href="#faq"
+            className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-2 py-1.5 text-[8px] font-semibold text-cream whitespace-nowrap transition-fast hover:text-brass sm:px-3 sm:py-2 sm:text-[10px] md:px-4 md:py-2.5 md:text-xs"
+          >
+            FAQ
+          </a>
+          <a
+            href="https://open.spotify.com"
+            target="_blank"
+            rel="noreferrer noopener"
+            aria-label="Listen on Spotify"
+            className="flex h-6 w-6 items-center justify-center rounded-full border border-white/15 bg-white/5 text-green-400 transition-fast hover:text-green-300 sm:h-8 sm:w-8 md:h-10 md:w-10"
+          >
+            <SpotifyIcon />
+          </a>
+          <a
+            href="https://www.youtube.com/@Prateekdz"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Listen on YouTube"
+            className="flex h-6 w-6 items-center justify-center rounded-full border border-white/15 bg-white/5 text-red-400 transition-fast hover:text-red-300 sm:h-8 sm:w-8 md:h-10 md:w-10"
+          >
+            <YouTubeIcon />
+          </a>
+        </div>
       </div>
     </div>
   );
