@@ -430,28 +430,24 @@ export default function Player() {
   }, [isPlaying]);
 
   const nextTrack = useCallback(() => {
-    setTrackIndex((i) => {
-      const next = (i + 1) % activeTracks.length;
-      const p = ytRef.current as unknown as { loadVideoById?: (id: string) => void };
-      p?.loadVideoById?.(activeTracks[next].videoId);
-      skipEffectRef.current = true;
-      setCurrentTime(0);
-      setDuration(0);
-      return next;
-    });
-  }, [activeTracks]);
+    const next = (trackIndex + 1) % activeTracks.length;
+    const p = ytRef.current as unknown as { loadVideoById?: (id: string) => void };
+    p?.loadVideoById?.(activeTracks[next].videoId);
+    skipEffectRef.current = true;
+    setTrackIndex(next);
+    setCurrentTime(0);
+    setDuration(0);
+  }, [activeTracks, trackIndex]);
 
   const prevTrack = useCallback(() => {
-    setTrackIndex((i) => {
-      const next = (i - 1 + activeTracks.length) % activeTracks.length;
-      const p = ytRef.current as unknown as { loadVideoById?: (id: string) => void };
-      p?.loadVideoById?.(activeTracks[next].videoId);
-      skipEffectRef.current = true;
-      setCurrentTime(0);
-      setDuration(0);
-      return next;
-    });
-  }, [activeTracks]);
+    const next = (trackIndex - 1 + activeTracks.length) % activeTracks.length;
+    const p = ytRef.current as unknown as { loadVideoById?: (id: string) => void };
+    p?.loadVideoById?.(activeTracks[next].videoId);
+    skipEffectRef.current = true;
+    setTrackIndex(next);
+    setCurrentTime(0);
+    setDuration(0);
+  }, [activeTracks, trackIndex]);
 
   const onSeek = useCallback(
     (ratio: number) => {
