@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Yaadon Ki Train icon">
+  <rect width="64" height="64" rx="16" fill="#14170f"/>
+  <path d="M16 44V18h12l7 7 7-7h12v26H16Zm10-8h28v-6H26v6Z" fill="#F2E8D6"/>
+  <circle cx="22" cy="46" r="4" fill="#D9A544"/>
+  <circle cx="42" cy="46" r="4" fill="#D9A544"/>
+</svg>
